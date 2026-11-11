@@ -1,0 +1,14 @@
+# Server logs — may contain device IPs and research telemetry
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/

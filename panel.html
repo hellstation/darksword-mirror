@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DarkSword — Demo Panel (Research)</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --amber: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --font: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+    }
+    .banner {
+      background: linear-gradient(90deg, #1a2332 0%, #161b22 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .banner h1 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+  .banner h1 span { color: var(--muted); font-weight: 400; }
+    .badge-demo {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--amber);
+      border: 1px solid rgba(210, 153, 34, 0.35);
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 53px);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .sidebar label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .sidebar input, .sidebar select {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+    }
+    .device-list { list-style: none; margin: 0; padding: 0; }
+    .device-list li {
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 6px;
+    }
+    .device-list li:hover { background: var(--surface2); }
+    .device-list li.active {
+      background: var(--surface2);
+      border-color: var(--accent);
+    }
+    .device-list .name { font-weight: 500; font-size: 13px; }
+    .device-list .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .dot.offline { background: var(--muted); }
+    .main { padding: 20px 24px; overflow-y: auto; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .stat .val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .stat .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .card-body { padding: 16px; }
+    .chain {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .stage {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-left: 2px solid var(--border);
+      margin-left: 11px;
+      padding-left: 20px;
+      position: relative;
+    }
+    .stage::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 14px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+    }
+    .stage.ok::before { background: var(--green); border-color: var(--green); }
+    .stage.fail::before { background: var(--red); border-color: var(--red); }
+    .stage.pending::before { background: var(--amber); border-color: var(--amber); }
+    .stage-title { font-weight: 500; }
+    .stage-detail { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 500; font-size: 11px; }
+    tr:last-child td { border-bottom: none; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+    .pill.ok { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+    .pill.warn { background: rgba(210, 153, 34, 0.15); color: var(--amber); }
+    .log {
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 220px;
+      overflow-y: auto;
+      color: var(--muted);
+    }
+    .log .line { margin-bottom: 4px; }
+    .log .ms { color: var(--purple); }
+    .footer-note {
+      margin-top: 24px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    #import-file { display: none; }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <h1>DarkSword <span>— operator panel (mockup)</span></h1>
+    <span class="badge-demo">Demo only · no C2</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <label>Search</label>
+      <input type="search" id="search" placeholder="UUID, model…" autocomplete="off">
+
+      <label>Campaign</label>
+      <select id="filter-campaign">
+        <option value="">All</option>
+        <option value="lab">Lab (local)</option>
+        <option value="unc6353">UNC6353 (mockup)</option>
+      </select>
+
+      <label>Devices</label>
+      <ul class="device-list" id="device-list"></ul>
+
+      <button type="button" class="btn" id="btn-reset">Reset demo data</button>
+      <button type="button" class="btn" id="btn-import">Import JSON (log)</button>
+      <input type="file" id="import-file" accept=".json,.log,application/json">
+    </aside>
+
+    <main class="main">
+      <div class="stats" id="stats"></div>
+
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-header">Exploit chain</div>
+          <div class="card-body">
+            <div class="chain" id="chain"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">Device details</div>
+          <div class="card-body" id="device-detail"></div>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top: 16px;">
+        <div class="card-header">Exfiltration (GHOSTBLADE mockup)</div>
+        <div class="card-body">
+          <table id="exfil-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Records</th>
+                <th>Size</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 16px;">
+        <div class="card-header">Stage log (log.html simulation)</div>
+        <div class="card-body">
+          <div class="log" id="event-log"></div>
+        </div>
+      </section>
+
+      <p class="footer-note">
+        Educational mockup only: data is fictitious; this panel does not connect to <code>pe_main.js</code> or live C2.
+        Run <code>python3 server.py</code>, then open <code>http://&lt;IP&gt;:8080/panel.html</code>.
+        To exercise the chain delivery path, use <code>frame.html</code> separately in an isolated lab.
+      </p>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "darksword_panel_demo_v1";
+
+    const DEFAULT_DEVICES = [
+      {
+        id: "a3f2-7c91-4e20-b881",
+        online: true,
+        campaign: "lab",
+        model: "iPhone14,5",
+        name: "iPhone 13",
+        ios: "18.5 (22F76)",
+        soc: "A15",
+        uid: "session-7f3a",
+        firstSeen: "2026-04-08T14:22:00Z",
+        lastSeen: "2026-04-08T14:31:12Z",
+        chainPath: "18.4",
+        stages: [
+          { id: "delivery", title: "Delivery", file: "index.html → frame.html → rce_loader.js", status: "ok", ms: 120 },
+          { id: "rce", title: "RCE (CVE-2025-31277)", file: "rce_module.js + rce_worker.js", status: "ok", ms: 1840 },
+          { id: "pac", title: "PAC bypass (CVE-2026-20700)", file: "rce_worker*.js", status: "ok", ms: 920 },
+          { id: "sbx0", title: "Sandbox #1 → GPU", file: "sbx0_main_18.4.js", status: "ok", ms: 2100 },
+          { id: "sbx1", title: "Sandbox #2 → mediaplaybackd", file: "sbx1_main.js", status: "ok", ms: 3400 },
+          { id: "pe", title: "Kernel PE (CVE-2025-43520)", file: "pe_main.js", status: "ok", ms: 5100 },
+          { id: "payload", title: "Payload", file: "GHOSTBLADE (webpack in pe_main)", status: "ok", ms: 6200 }
+        ],
+        exfil: [
+          { cat: "Contacts / calls", count: 412, size: "1.2 MB", status: "ok" },
+          { cat: "iMessage / Notes", count: 89, size: "4.8 MB", status: "ok" },
+          { cat: "Safari / bookmarks", count: 156, size: "0.3 MB", status: "ok" },
+          { cat: "Wi‑Fi (keychain dump)", count: 7, size: "2.1 KB", status: "warn" },
+          { cat: "Photos (previews)", count: 0, size: "—", status: "warn" },
+          { cat: "Crypto wallets", count: 0, size: "—", status: "pending" }
+        ],
+        log: [
+          { ms: 0, text: "rce_loader: UA parsed, iOS 18.5" },
+          { ms: 340, text: "stage1: offsets matched iPhone14,5" },
+          { ms: 1840, text: "primitives: addrof/fakeobj/read64/write64" },
+          { ms: 2760, text: "dlopen + fcall ready (WebContent)" },
+          { ms: 4860, text: "sbx0: ANGLE trigger complete" },
+          { ms: 8260, text: "sbx1: JSC copy in mediaplaybackd" },
+          { ms: 13360, text: "pe_main: kernel R/W established" },
+          { ms: 15100, text: "payload: POST mock → (demo panel only)" }
+        ]
+      },
+      {
+        id: "b901-22aa-88ff-0012",
+        online: false,
+        campaign: "unc6353",
+        model: "iPhone15,3",
+        name: "iPhone 14 Pro Max",
+        ios: "18.6.1",
+        soc: "A16",
+        uid: "session-991c",
+        firstSeen: "2026-04-07T09:10:00Z",
+        lastSeen: "2026-04-07T09:10:45Z",
+        chainPath: "18.6",
+        stages: [
+          { id: "delivery", title: "Delivery", file: "widgets.js → frame.html", status: "ok", ms: 95 },
+          { id: "rce", title: "RCE (CVE-2025-43529)", file: "rce_module_18.6.js + rce_worker_18.6.js", status: "fail", ms: 2100 },
+          { id: "pac", title: "PAC bypass", file: "—", status: "pending", ms: null },
+          { id: "sbx0", title: "Sandbox #1", file: "—", status: "pending", ms: null },
+          { id: "sbx1", title: "Sandbox #2", file: "—", status: "pending", ms: null },
+          { id: "pe", title: "Kernel PE", file: "—", status: "pending", ms: null },
+          { id: "payload", title: "Payload", file: "—", status: "pending", ms: null }
+        ],
+        exfil: [],
+        log: [
+          { ms: 0, text: "rce_loader: branch 18.6.x selected" },
+          { ms: 180, text: "getJS rce_module_18.6.js (85 bytes — placeholder in repo)" },
+          { ms: 2100, text: "eval: stage1_rce aborted — module incomplete" }
+        ]
+      },
+      {
+        id: "c044-5511-dev-local",
+        online: true,
+        campaign: "lab",
+        model: "iPhone13,2",
+        name: "iPhone 12 Pro",
+        ios: "18.4",
+        soc: "A14",
+        uid: "1",
+        firstSeen: "2026-04-08T16:00:00Z",
+        lastSeen: "2026-04-08T16:02:30Z",
+        chainPath: "18.4",
+        stages: [
+          { id: "delivery", title: "Delivery", file: "SERVER_LOG patched origin", status: "ok", ms: 80 },
+          { id: "rce", title: "RCE", file: "rce_module.js", status: "ok", ms: 2200 },
+          { id: "pac", title: "PAC bypass", file: "rce_worker.js", status: "ok", ms: 1100 },
+          { id: "sbx0", title: "Sandbox #1", file: "sbx0_main_18.4.js", status: "pending", ms: null },
+          { id: "sbx1", title: "Sandbox #2", file: "—", status: "pending", ms: null },
+          { id: "pe", title: "Kernel PE", file: "—", status: "pending", ms: null },
+          { id: "payload", title: "Payload", file: "—", status: "pending", ms: null }
+        ],
+        exfil: [
+          { cat: "Loader telemetry", count: 12, size: "0.8 KB", status: "ok" }
+        ],
+        log: [
+          { ms: 0, text: "sessionStorage uid=1 (index.html)" },
+          { ms: 50, text: "frame.html → rce_loader (patched by server.py)" },
+          { ms: 2200, text: "check_attempt.start() → true" }
+        ]
+      }
+    ];
+
+    let state = {
+      devices: structuredClone(DEFAULT_DEVICES),
+      selectedId: DEFAULT_DEVICES[0].id
+    };
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.devices?.length) state = parsed;
+        }
+      } catch (_) {}
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getSelected() {
+      return state.devices.find((d) => d.id === state.selectedId) || state.devices[0];
+    }
+
+    function renderDeviceList() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const camp = document.getElementById("filter-campaign").value;
+      const ul = document.getElementById("device-list");
+      ul.innerHTML = "";
+      state.devices
+        .filter((d) => {
+          if (camp && d.campaign !== camp) return false;
+          const hay = [d.id, d.name, d.model, d.uid, d.ios].join(" ").toLowerCase();
+          return !q || hay.includes(q);
+        })
+        .forEach((d) => {
+          const li = document.createElement("li");
+          li.className = d.id === state.selectedId ? "active" : "";
+          li.innerHTML = `
+            <div class="name">
+              <span class="dot ${d.online ? "online" : "offline"}"></span>${d.name}
+            </div>
+            <div class="meta">${d.ios} · ${d.campaign}</div>
+          `;
+          li.onclick = () => {
+            state.selectedId = d.id;
+            saveState();
+            renderAll();
+          };
+          ul.appendChild(li);
+        });
+    }
+
+    function renderStats() {
+      const online = state.devices.filter((d) => d.online).length;
+      const success = state.devices.filter((d) =>
+        d.stages.every((s) => s.id === "payload" ? s.status === "ok" : true) &&
+        d.stages.find((s) => s.id === "pe")?.status === "ok"
+      ).length;
+      const failed = state.devices.filter((d) =>
+        d.stages.some((s) => s.status === "fail")
+      ).length;
+      const el = document.getElementById("stats");
+      el.innerHTML = `
+        <div class="stat"><div class="val">${state.devices.length}</div><div class="lbl">Devices (mockup)</div></div>
+        <div class="stat"><div class="val">${online}</div><div class="lbl">Online</div></div>
+        <div class="stat"><div class="val">${success}</div><div class="lbl">Chain to kernel (mockup)</div></div>
+        <div class="stat"><div class="val">${failed}</div><div class="lbl">Failed at stage</div></div>
+      `;
+    }
+
+    function renderChain(device) {
+      const el = document.getElementById("chain");
+      el.innerHTML = device.stages
+        .map(
+          (s) => `
+        <div class="stage ${s.status}">
+          <div>
+            <div class="stage-title">${s.title}</div>
+            <div class="stage-detail">${s.file}${s.ms != null ? ` · +${s.ms} ms` : ""}</div>
+          </div>
+        </div>`
+        )
+        .join("");
+    }
+
+    function renderDetail(device) {
+      const el = document.getElementById("device-detail");
+      el.innerHTML = `
+        <table>
+          <tr><th>UUID</th><td style="font-family:var(--mono)">${device.id}</td></tr>
+          <tr><th>Session uid</th><td>${device.uid}</td></tr>
+          <tr><th>Model</th><td>${device.name} (${device.model})</td></tr>
+          <tr><th>SoC</th><td>${device.soc}</td></tr>
+          <tr><th>iOS</th><td>${device.ios}</td></tr>
+          <tr><th>Branch</th><td>${device.chainPath === "18.6" ? "18.6+ (CVE-2025-43529)" : "18.4–18.5 (CVE-2025-31277)"}</td></tr>
+          <tr><th>First seen</th><td>${fmtDate(device.firstSeen)}</td></tr>
+          <tr><th>Last seen</th><td>${fmtDate(device.lastSeen)}</td></tr>
+          <tr><th>Campaign</th><td>${device.campaign}</td></tr>
+        </table>
+      `;
+    }
+
+    function renderExfil(device) {
+      const tbody = document.querySelector("#exfil-table tbody");
+      if (!device.exfil.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">No data — chain did not reach payload</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = device.exfil
+        .map(
+          (r) => `
+        <tr>
+          <td>${r.cat}</td>
+          <td>${r.count}</td>
+          <td>${r.size}</td>
+          <td><span class="pill ${r.status === "ok" ? "ok" : "warn"}">${r.status}</span></td>
+        </tr>`
+        )
+        .join("");
+    }
+
+    function renderLog(device) {
+      const el = document.getElementById("event-log");
+      el.innerHTML = device.log
+        .map((l) => `<div class="line"><span class="ms">+${l.ms}ms</span> ${escapeHtml(l.text)}</div>`)
+        .join("");
+    }
+
+    function fmtDate(iso) {
+      try {
+        return new Date(iso).toLocaleString("en-US");
+      } catch {
+        return iso;
+      }
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function renderAll() {
+      const device = getSelected();
+      renderDeviceList();
+      renderStats();
+      renderChain(device);
+      renderDetail(device);
+      renderExfil(device);
+      renderLog(device);
+    }
+
+    document.getElementById("search").addEventListener("input", renderDeviceList);
+    document.getElementById("filter-campaign").addEventListener("change", renderDeviceList);
+
+    document.getElementById("btn-reset").onclick = () => {
+      state = {
+        devices: structuredClone(DEFAULT_DEVICES),
+        selectedId: DEFAULT_DEVICES[0].id
+      };
+      saveState();
+      renderAll();
+    };
+
+    document.getElementById("btn-import").onclick = () => document.getElementById("import-file").click();
+
+    document.getElementById("import-file").onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (data.device) {
+            state.devices.unshift(data.device);
+            state.selectedId = data.device.id;
+          } else if (Array.isArray(data.devices)) {
+            state.devices = data.devices;
+            state.selectedId = data.devices[0]?.id;
+          } else if (data.log && Array.isArray(data.log)) {
+            const d = getSelected();
+            d.log = data.log.map((x, i) => ({
+              ms: x.ms ?? i * 100,
+              text: x.text ?? String(x)
+            }));
+          }
+          saveState();
+          renderAll();
+        } catch (err) {
+          alert("Could not parse JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    };
+
+    loadState();
+    if (!state.devices.find((d) => d.id === state.selectedId)) {
+      state.selectedId = state.devices[0]?.id;
+    }
+    renderAll();
+  </script>
+</body>
+</html>
