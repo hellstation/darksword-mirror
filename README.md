@@ -1,3 +1,5 @@
+![PicPenix](https://i.pinimg.com/1200x/bf/21/af/bf21af7d34a1d30d542493196b0ddaa2.jpg)
+
 # darksword-mirror
 
 **darksword-mirror** — static research mirror and local lab for the **DarkSword** iOS browser exploit chain: original JavaScript stages, `server.py` C2/CDN URL patching, and a mock operator panel. Not live C2 — **authorized defensive research only**.
